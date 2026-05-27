@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  tiers Tier[] @relation(name: "ProductToTier")
+  features    Feature[] @relation(name: "ProductToFeature")
+  quotes      Quote[]  @relation(name: "ProductToQuote")
+  createdAt   DateTime @default(now())
+}
+
+
+
+model Tier {
+  id          String   @id @default(uuid())
+
+  name        String
+  basePrice   Float
+
+  productId   String
+
+  product Product @relation(name: "ProductToTier", fields: [productId], references: [id])
+   tierFeatures TierFeature[] @relation(name: "TierToTierFeature")
+
+  quotes       Quote[] @relation(name: "TierToQuote")
+
+  createdAt   DateTime @default(now())
+}
+
+model Feature {
+  id           String         @id @default(uuid())
+  name         String
+  productId    String
+  product      Product        @relation(name: "ProductToFeature", fields: [productId], references: [id])
+  tierFeatures TierFeature[]  @relation(name: "FeatureToTierFeature")
+  quoteAddons  QuoteAddon[]    @relation(name: "FeatureToQuoteAddon")
+}
+
+enum FeatureAvailability {
+  INCLUDED
+  ADDON
+  NOT_AVAILABLE
+}
+
+enum PricingModel {
+  FIXED
+  PER_SEAT
+  PERCENTAGE
+}
+
+model TierFeature {
+  id           String          @id @default(uuid())
+  tierId       String
+  featureId    String
+  availability FeatureAvailability
+  pricingModel PricingModel?
+  price        Float?
+  tier Tier @relation(name: "TierToTierFeature", fields: [tierId], references: [id])
+  feature      Feature         @relation(name: "FeatureToTierFeature", fields: [featureId], references: [id])
+}
+
+enum ContractTerm {
+  MONTHLY
+  ANNUAL
+  TWO_YEAR
+}
+
+model Quote {
+  id              String       @id @default(uuid())
+  quoteName       String
+  customerName    String
+  seats           Int
+  term            ContractTerm
+  discountPercent Float
+  subtotal        Float
+  total           Float
+  productId       String
+  tierId          String
+  product         Product      @relation(name: "ProductToQuote", fields: [productId], references: [id])
+  tier Tier @relation(name: "TierToQuote", fields: [tierId], references: [id])
+  addOns          QuoteAddon[] @relation(name: "QuoteToAddon")
+  createdAt       DateTime     @default(now())
+}
+
+model QuoteAddon {
+  id              String  @id @default(uuid())
+  quoteId         String
+  featureId       String
+  seats           Int?
+  calculatedPrice Float
+  quote           Quote   @relation(name: "QuoteToAddon", fields: [quoteId], references: [id])
+  feature         Feature @relation(name: "FeatureToQuoteAddon", fields: [featureId], references: [id])
+}
+
