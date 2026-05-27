@@ -49,7 +49,7 @@ Create a `.env` file in the root directory and copy the values from `.env.exampl
 Example:
 
 ```env
-DATABASE_URL="your_database_url"
+DATABASE_URL="postgresql://postgres:Admin123@localhost:5432/quote_db"
 ```
 
 ### 4. Run database migrations
